@@ -1,0 +1,2 @@
+# ansible_scripts
+ansible playbooks实现系统初始化及常见应用环境的自动部署和配置
