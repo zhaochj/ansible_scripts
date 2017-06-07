@@ -1,0 +1,31 @@
+---
+- block:
+    - name: download node-v6.5.0-linux-x64_install-pm2.tar.gz from fileserver. tags --> down_node_pm2
+      get_url: url=http://{{ fileserver }}/node/node-v6.5.0-linux-x64_install-pm2.tar.gz dest=/opt/
+      tags: dwon_node_pm2
+
+    - name: unarchive pm2 package. tags --> unarchive_node_pm2
+      unarchive: src=/opt/node-v6.5.0-linux-x64_install-pm2.tar.gz dest=/opt/ copy=no
+      tags: unarchive_node_pm2
+
+#    - name: check the node enviroment. tags --> check_node_env
+#      shell: /bin/ls /etc/profile.d | grep node65.sh
+#      register: check_env
+#      ignore_errors: True
+#      tags: check_node_env
+#
+#    - name: configure node environment if check_env is failed. tags --> confige_node_env
+#      shell: echo "PATH=/opt/node-v6.5.0-linux-x64/bin:\$PATH" >> /etc/profile.d/node65.sh
+#      when: check_env|failed
+#      tags: confige_node_env
+
+    - name: test
+      lineinfile: 
+          dest: /etc/profile.d/node65.sh
+          state: present
+          create: yes
+          line: 'PATH=/opt/node-v6.5.0-linux-x64/bin:$PATH'
+      tags: test
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"
+

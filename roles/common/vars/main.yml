@@ -1,0 +1,6 @@
+---
+iov_read_passwd: $6$raaPZ9mI$fcbWjT6Jvzhg58wOXfKtWXIUCCpWunut6IfJVXDHhh8JD5oxV/WK0Jzg5cRiV07b/x4AdTHyCayKCkfkRjVn9/
+zabbix_user: zabbix
+zabbix_passwd_pro: $6$GxgO14yy$RyH.Ue.8L0rs5R6sWRF2fXfsObDuZGMZL3prHRj2oFxDQgYxOG.zwe/o3iaa.uHIO04xcn6wItAiHUVR6Eo4H. 
+zabbix_passwd_pre: $6$fey85o8F$HVR1yrYC2S8oDOSwm4jULT9LF3JwZc9XxYF/EleOdlvbV2Mds3yTVhA5aQYSM7xJoY9yj.47gQ/am8QDJlUI5/
+kartor_passwd: $6$tQLxyrmc$iGxHzVKtQGzn3z.epWnHOm2lZjQ.iPjG2GlxkKNMQLLnNC7Fm7xI8MSnEQDb6bEtQNT0N2Fm9tKnuLoI2gJa71

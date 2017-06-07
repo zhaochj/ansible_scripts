@@ -1,0 +1,21 @@
+#!/bin/bash
+#Author: Neal
+#Email: 419775240@qq.com
+#Date: 2016/12/30
+
+
+checkfile=/home/{{ user }}/.bashrc
+
+grep "CATALINA_HOME" $checkfile > /dev/null 2>&1
+if [ $? -ne 0 ];then
+    /bin/bash -c 'cat <<- EOF >> /home/tomcat/.bashrc
+
+###################custom environment variable#####################
+CATALINA_HOME=/home/{{ user }}/tomcat-7.0.65
+export PATH=\$CATALINA_HOME/bin:\$PATH
+export CATALINA_HOME
+
+PATH=\$PATH:\$HOME/bin
+export PATH
+EOF'
+fi

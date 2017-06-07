@@ -1,0 +1,11 @@
+#!/bin/bash
+#Author: Neal
+#Email: 419775240@qq.com
+#Date: 2017-01-05
+#Version: 1.0
+
+ip=`/sbin/ifconfig eth0 |sed -n '/inet addr/s/^[^:]*:\([0-9.]\{7,15\}\) .*/\1/p'`
+broker_id=`echo ${ip##*.}`
+if [ `grep "^broker.id=0" /home/{{ user }}/kafka_2.10-0.10.0.0/config/server.properties` ];then
+    sed -i "s@broker.id=0@broker.id=${broker_id}@" /home/{{ user }}/kafka_2.10-0.10.0.0/config/server.properties
+fi

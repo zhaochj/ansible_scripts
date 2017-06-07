@@ -1,0 +1,17 @@
+[Unit]
+Description=nginx - high performance web server 
+Documentation=http://nginx.org/en/docs/
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/nginx18.pid
+ExecStartPre=/usr/local/nginx18/sbin/nginx -t -c /usr/local/nginx18/conf/nginx.conf
+ExecStart=/usr/local/nginx18/sbin/nginx -c /usr/local/nginx18/conf/nginx.conf
+ExecReload=/usr/local/nginx18/sbin/nginx -s reload
+ExecStop=/usr/local/nginx18/sbin/nginx -s stop
+TimeoutStopSec=5
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

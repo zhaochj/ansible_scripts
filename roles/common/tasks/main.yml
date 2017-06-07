@@ -1,0 +1,170 @@
+---
+- block:
+    - name: configure the repository
+      get_url: url=http://{{ fileserver }}/common/sources.list dest=/etc/apt
+      tags: sources
+
+    - name: replace /etc/hosts  for the prerelease environment
+      template: src=/home/ansible/playbooks/hosts_template/hosts_pre.j2 dest=/etc/hosts backup=yes
+      when: env == "pre"
+      tags: hosts_pre
+       
+    - name: replace /etc/hosts for the production environment
+      template: src=/home/ansible/playbooks/hosts_template/hosts_production.j2 dest=/etc/hosts backup=yes
+      when: env == "production"
+      tags: hosts_pro
+
+    - name: update source cache
+      apt: update_cache=yes cache_valid_time=3600
+      tags: update_source
+    
+    - name: install base packages
+      apt: name={{ item }} state=present
+      with_items:
+          - cronolog
+          - rsync
+          - vim
+          - ntpdate
+          - unzip
+          - sudo
+          - chkconfig
+          - cron
+          - logrotate
+          - aptitude
+          - anacron
+      tags: install_base_packages
+    
+    - name: install other packages
+      apt: name={{ item }} state=present
+      with_items:
+          - telnet
+          - tcpdump
+          - git-core
+          - sysstat
+          - htop
+          - nmon
+          - lrzsz
+          - subversion
+          - curl
+          - iptraf
+      tags: install_other_packages
+
+    - name: configure DNS
+      copy: src=resolv.conf dest=/etc backup=yes
+      tags: chg_dns
+    
+    - name: Remote login to disable DNS. tags --> chg_login_dns
+      copy: src=sshd_config dest=/etc/ssh backup=yes
+      tags: chg_login_dns
+      notify: restart ssh
+    
+    - name: configure openfiles,all users is set to 65535
+      copy: src=limits.conf dest=/etc/security/limits.conf backup=yes
+      tags: chg_openfile
+    
+    - name: boot execution time synchronization. tags --> time_rsync_boot
+      template: src=rc.local.j2 dest=/etc/rc.local backup=yes
+      tags: time_rsync_boot_production
+    
+    - name: enable cron log
+      copy: src=rsyslog.conf dest=/etc backup=yes
+      tags: chg_rsyslog
+      notify: restart rsyslog
+    
+    - name: time synchronization for prerelease
+      cron: name='rsync time' minute={{ 59 |random(step=5) }} hour='{{ 5 |random }},{{ 23|random(start=7,step=3) }}' user=root job='/usr/sbin/ntpdate -u 172.31.1.100 > /tmp/cron_time.txt'
+      when: env == "pre"
+      tags: chg_cron_pre
+    
+    - name: time synchronization for production
+      cron: name='rsync time' minute={{ 59 |random(step=5) }} hour='{{ 5 |random }},{{ 23|random(start=7,step=3) }}' user=root job='/usr/sbin/ntpdate -u 172.31.3.1 > /tmp/cron_time.txt'
+      when: env == "production"
+      tags: chg_cron_production
+    
+    - name: configuration vim syntax on
+      copy: src=vimrc dest=/etc/vim/ backup=yes
+      tags: syntax_on
+    
+    - name: configuration locale
+      copy: src=locale dest=/etc/default/locale backup=yes
+      tags: locale_utf8
+
+    - name: set alias
+      copy: src=alias.sh dest=/etc/profile.d
+      tags: alias
+    
+    - name: add iov_read user,password is " "
+      user: name=iov_read password={{ iov_read_passwd }} shell=/bin/bash
+      tags: add_iov_read
+
+    - name: add backup user.
+      user: name=kartor password={{ kartor_passwd }} shell=/bin/bash uid=0 group=root non_unique=yes
+      tags: add_kartor
+
+# zabbix confige start
+    - name: add zabbix user to the production environment. --> add_zabbix_pro
+      user: name={{ zabbix_user }} password={{ zabbix_passwd_pro }} shell=/bin/bash
+      when: env == "production"
+      tags: add_zabbix_pro
+
+    - name: add zabbix user to the pre-release environment. --> add_zabbix_pre
+      user: name={{ zabbix_user }} password={{ zabbix_passwd_pre }} shell=/bin/bash
+      when: env == "pre"
+      tags: add_zabbix_pre
+
+    - name: install zabbix-agent. --> install_zabbix_agent
+      apt: deb=http://{{ fileserver }}/zabbix/zabbix-agentd_2.4.5-1+wheezy_amd64.deb
+      tags: install_zabbix_agent
+
+    - name: prepare UserParameter_Pro.conf file. ---> copy_UserParameter_Pro.conf
+      copy: src=UserParameter_Pro.conf dest=/usr/local/etc/zabbix_agentd.conf.d/
+      tags: copy_UserParameter_Pro.conf
+
+    - name: modify "/usr/local/etc/zabbix_agentd.conf.d/" permissions. --> chown_zabbix_dirrectory
+      file: path=/usr/local/etc/zabbix_agentd.conf.d/ state=directory recurse=yes owner={{ zabbix_user }} group={{ zabbix_user }} mode=0755
+      tags: chown_zabbix_dirrectory
+
+    - name: modify "/usr/local/etc/zabbix_agentd.conf" permissions. --> chown_zabbix_conf_fil
+      file: path=/usr/local/etc/zabbix_agentd.conf owner={{ zabbix_user }} group={{ zabbix_user }}
+      tags: chown_zabbix_conf_file
+
+    - name: boot zabbix_agentd service for production. --> boot_zabbix_agentd_pro
+      service: name=zabbix_agentd enabled=yes state=started
+      when: env == "production"
+      tags: boot_zabbix_agentd_pro
+
+    - name: stop zabbix_agentd service for pre-release. --> stop_zabbix_agentd_pro
+      service: name=zabbix_agentd enabled=no state=stopped
+      when: env == "pre"
+      tags: stop_zabbix_agentd_pre
+
+    - name: with zabbix user to management zabbix_agentd. --> sudo _zabbix_user
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '/etc/init.d/zabbix_agentd'
+        #line: '{{ zabbix_user }} ALL=(root:root) NOPASSWD: /etc/init.d/zabbix_agentd'
+        line: '{{ zabbix_user }} ALL=(root:root) NOPASSWD:ALL'
+        validate: 'visudo -cf %s'
+      tags: sudo_zabbix_user
+# zabbix confige stop
+
+    - name: With tomcat users to perform ntpdate
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '/usr/sbin/ntpdate'
+        line: '{{ user }} ALL=(root:root) NOPASSWD: /usr/sbin/ntpdate'
+        validate: 'visudo -cf %s'
+      tags: sudo_ntpdate
+
+    - name: With tomcat users to confige hosts
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '/usr/bin/vim'
+        line: '{{ user }} ALL=(root:root) NOPASSWD: /usr/bin/vim /etc/hosts'
+        validate: 'visudo -cf %s'
+      tags: sudo_vim_hosts
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

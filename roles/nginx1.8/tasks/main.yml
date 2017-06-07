@@ -1,0 +1,90 @@
+---
+
+- block:
+    - name: install dependencies for nginx. tags --> depend_pkg
+      apt: name={{ item }} state=present
+      with_items:
+           - openssl
+           - libssl1.0.0
+           - libssl-dev
+           - zlib1g
+           - libpcre3 
+           - libpcre3-dev
+           - gcc
+      tags: depend_pkg
+
+    - name: download nginx package for fileserver. tags --> down_nginx
+      get_url: url=http://{{ fileserver }}/nginx/nginx18.tar.gz dest={{ nginx_work_dir }}
+      tags: down_nginx
+
+    - name: unarchive nginx package. tags --> unarchive
+      unarchive: src={{ nginx_work_dir }}/nginx18.tar.gz dest={{ nginx_work_dir }}/ copy=no group=root owner=root
+      tags: unarchive
+
+    - name: create temporary directory. tags --> create_dir
+      file: path=/var/tmp/nginx18/{{ item }} group=root owner=root mode=0755 state=directory
+      with_items:
+           - proxy
+           - fastcgi
+           - uwsgi
+           - scgi
+      tags: create_dir
+    
+    - name: add nginx user. tags --> adduser_nginx
+      user: name=nginx shell=/bin/bash password={{ run_java_user_passwd_pre }} state=present
+      when: env == "pre"
+      tags: adduser_nginx
+
+    - name: check nginx user sudo perission. tags --> nginx_sudo_check
+      shell: grep -e "^nginx" /etc/sudoers
+      register: check_sudo
+      ignore_errors: True
+      tags: nginx_sudo_check
+
+    - name: copy nginx_sudo file to remote. tags --> nginx_sudo_file
+      copy: src=nginx_sudo dest=/tmp/
+      when: check_sudo|failed
+      tags: nginx_sudo_file
+
+    - name: configure nginx user sudo perission if check_sudo failed.
+      shell: cat < /tmp/nginx_sudo >> /etc/sudoers
+      when: check_sudo|failed
+
+    - name: add nginx user. tags --> adduser_nginx
+      user: name=nginx shell=/bin/bash password={{ run_java_user_passwd_pro }} state=present
+      when: env == "production"
+      tags: adduser_nginx
+
+    - name: prepare nginx.conf file. tags --> prepare_nginx.conf
+      template: src=nginx.conf.j2 dest={{ nginx_work_dir }}/nginx18/conf/nginx.conf mode=0644
+      tags: prepare_nginx.conf
+    
+    - name: export binary file. tags --> export_binary
+      copy: src=nginx18.sh dest=/etc/profile.d group=root owner=root mode=0644
+      tags: export_binary
+    
+    - name: systemctl way manage nginx. tags --> nginx_service
+      copy: src=nginx.service dest=/lib/systemd/system group=root owner=root mode=0644
+      tags: nginx_service
+    
+    - name: nginx.conf syntax highlighting. syntax_highlight
+      copy: src=.vim dest={{ ansible_env.HOME }} group=root owner=root mode=0644
+      tags: syntax_highlight
+
+    - name: configure log scrolling,the default is 30 days. tags --> log_rotate
+      copy: src=nginx dest=/etc/logrotate.d group=root owner=root mode=0644
+      tags: log_rotate
+    
+    - name: network optimization. tags --> net_opt
+      copy: src=sysctl.conf dest=/etc group=root owner=root mode=0644 backup=yes
+      tags: net_opt
+    
+    - name: execute "sysctl -p".
+      shell: /sbin/sysctl -p
+      tags: reload_sysctl.conf
+
+    - name: nginx service power up. tags --> start_nginx
+      service: name=nginx.service state=started enabled=yes
+      tags: start_nginx
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

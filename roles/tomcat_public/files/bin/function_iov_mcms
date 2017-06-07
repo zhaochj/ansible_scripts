@@ -1,0 +1,55 @@
+#!/bin/bash
+#Program: Clean up the temporary data, start the service
+#Author: Neal
+#Email: 419775240@qq.com
+#Date: 2015-10-22
+
+# May need to change the value of the variable
+PROJECT_NAME=iov_mcms
+INSTANCE_NAME=tomcat9100
+JAVA_HOME=/home/tomcat/jdk1.7.0_60
+CATALINA_HOME=/home/tomcat/$INSTANCE_NAME
+USER_HOME=/home/tomcat
+BACKUP_DIR=/home/tomcat/bak
+
+PATH=${USER_HOME}/bin:${JAVA_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
+start () {
+    iov_mcms_start
+    #查看日志的语句没有写在启动脚本中，因ansible调用后后台会有一个tailf进程存在
+    tailf -100 ${CATALINA_HOME}/logs/catalina.out.`date +%F`
+}
+stop () {
+    iov_mcms_stop
+}
+backup () {
+    TIME_PREFIX=`date +%Y%m%d%H%M`
+    cp -r ${CATALINA_HOME}/webapps/${PROJECT_NAME} ${BACKUP_DIR}/${PROJECT_NAME}${TIME_PREFIX}
+    echo "Backup directory:"
+    ls -d ${BACKUP_DIR}/${PROJECT_NAME}${TIME_PREFIX}
+}
+
+boot_log () {
+    less ${CATALINA_HOME}/logs/catalina.out.`date +%F`
+}
+
+info_log () {
+    less ${CATALINA_HOME}/logs/${PROJECT_NAME}/info/info.log
+}
+
+debug_log () {
+    less ${CATALINA_HOME}/logs/${PROJECT_NAME}/debug/debug.log
+}
+
+warn_log () {
+    less ${CATALINA_HOME}/logs/${PROJECT_NAME}/warn/warn.log
+}
+
+trace_log () {
+    less ${CATALINA_HOME}/logs/${PROJECT_NAME}/trace/trace.log
+}
+
+error_log () {
+    less ${CATALINA_HOME}/logs/${PROJECT_NAME}/error/error.log
+}

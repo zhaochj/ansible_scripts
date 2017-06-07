@@ -1,0 +1,12 @@
+#!/bin/bash
+#Author: Neal
+#Email: 419775240@qq.com
+#Date: 2017-01-11
+
+source /etc/profile
+
+counter=$(jps | grep Kafka | wc -l)
+if [ "${counter}" = "0" ];then
+    cd /home/{{ user }}/kafka_2.10-0.10.0.0/
+    bin/kafka-server-start.sh -daemon config/server.properties
+fi

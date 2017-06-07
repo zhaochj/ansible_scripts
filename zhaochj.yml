@@ -1,0 +1,98 @@
+---
+- hosts: servers
+  remote_user: root
+  vars:
+    favcolor: blue
+  vars_files:
+    - roles/vars/global.yml
+    - roles/vars/fileserver.yml
+
+  roles:
+
+   ## jdk1.7 + tomcat-7.0.54 + [ node-v6.5.0 ]
+    - common
+   # - jdk_public
+   # - jdk1.7.0_60
+   # - tomcat_public
+   # - tomcat-7.0.54
+   ## 可选node环境
+   # - node-v6.5.0
+    - change_root_passwd
+
+
+   ## jdk1.8 + tomcat-7.0.65
+   # - common
+   # - jdk_public
+   # - jdk1.8.0_65
+   # - tomcat_public
+   # - tomcat-7.0.65
+   ## 可选node环境
+   # - node-v6.5.0
+   # - change_root_passwd
+
+
+   ## jdk1.7 + tomcat-7.0.65
+   # - common
+   # - jdk_public
+   # - jdk1.7.0_60
+   # - tomcat_public
+   # - tomcat-7.0.65
+   # - change_root_passwd
+
+   
+   ## 单独部署node环境需要"jdk_public"
+   # - node-v6.5.0
+
+
+   ## nginx高可用、负载均衡架构(已测试)
+   ## 现网：ansible-playbook -i zcj_hosts_production zhaochj.yml -k -e "env=production"
+   # - common
+   # - keepalived-1.2
+   # - nginx1.8
+   # - pyenv_python3
+   # - { role: nginx_conf_rsync,when: "nginx_role == 'master'"} 
+   # - change_root_passwd
+        ##### hosts format #####
+        #[servers]
+        #172.20.8.18 nginx_role=master vip=172.20.13.10 router_id=60 realserver01=172.20.8.18 realserver02=172.20.8.19 
+        #172.20.8.19 nginx_role=slave  vip=172.20.13.10 router_id=60 realserver01=172.20.8.18 realserver02=172.20.8.19
+        ##### hosts format #####
+
+
+
+   # zookeeper-3.4.6环境，支持3节点或5节点
+   # - common
+   # - jdk_public
+   # - jdk1.7.0_60
+   # - zookeeper-3.4.6
+   # - change_root_passwd
+       #### hosts format ####
+       #[servers]
+       #10.0.0.100 node01=10.0.0.100 myid01=1 node02=10.0.0.101 myid02=2 node03=10.0.0.102 myid03=3 node04=10.0.0.103 myid04=4 node05=10.0.0.104 myid05=5
+       #10.0.0.101 node01=10.0.0.100 myid01=1 node02=10.0.0.101 myid02=2 node03=10.0.0.102 myid03=3 node04=10.0.0.103 myid04=4 node05=10.0.0.104 myid05=5
+       #10.0.0.102 node01=10.0.0.100 myid01=1 node02=10.0.0.101 myid02=2 node03=10.0.0.102 myid03=3 node04=10.0.0.103 myid04=4 node05=10.0.0.104 myid05=5
+       #10.0.0.103 node01=10.0.0.100 myid01=1 node02=10.0.0.101 myid02=2 node03=10.0.0.102 myid03=3 node04=10.0.0.103 myid04=4 node05=10.0.0.104 myid05=5
+       #10.0.0.104 node01=10.0.0.100 myid01=1 node02=10.0.0.101 myid02=2 node03=10.0.0.102 myid03=3 node04=10.0.0.103 myid04=4 node05=10.0.0.104 myid05=5
+
+
+   ## kafka环境
+   # - common
+   # - jdk_public
+   # - jdk1.7.0_60
+   # - kafka_2.10-0.9.0.1
+   # - kafka_2.10-0.10.0.0
+        ##### hosts format #####
+        #[servers] 
+        #10.0.0.200  brokerid=200  zk_connect=10.0.0.200:2181,10.0.0.201:2181,10.0.0.202:2181,10.0.0.203:2181,10.0.0.204:2181/kafka
+        #10.0.0.201  brokerid=201  zk_connect=10.0.0.200:2181,10.0.0.201:2181,10.0.0.202:2181,10.0.0.203:2181,10.0.0.204:2181/kafka
+        #10.0.0.202  brokerid=202  zk_connect=10.0.0.200:2181,10.0.0.201:2181,10.0.0.202:2181,10.0.0.203:2181,10.0.0.204:2181/kafka
+        #10.0.0.203  brokerid=203  zk_connect=10.0.0.200:2181,10.0.0.201:2181,10.0.0.202:2181,10.0.0.203:2181,10.0.0.204:2181/kafka
+        #10.0.0.204  brokerid=204  zk_connect=10.0.0.200:2181,10.0.0.201:2181,10.0.0.202:2181,10.0.0.203:2181,10.0.0.204:2181/kafka
+
+    
+
+
+## 预发布
+## ansible-playbook -i zcj_hosts_pre zhaochj.yml -k -e "user=tomcat env=pre"
+## 现网
+## ansible-playbook -i zcj_hosts_production zhaochj.yml -k -e "user=tomcat env=production"

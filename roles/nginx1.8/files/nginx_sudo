@@ -1,0 +1,1 @@
+nginx ALL=(root:root) NOPASSWD: ALL

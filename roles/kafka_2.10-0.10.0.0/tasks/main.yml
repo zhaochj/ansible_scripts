@@ -1,0 +1,56 @@
+---
+- block:
+    - name: download kafka package from fileserver. tags --> down_kafka
+      get_url: url=http://{{ fileserver }}/kafka/kafka_2.10-0.10.0.0.tgz dest=/home/{{ user }}/bak/ group={{ user }} owner={{ user }}
+      tags: down_kafka
+
+    - name: unarchive kafka/kafka_2.10-0.10.0.0.tgz. tags --> unarchive
+      unarchive: src=/home/{{ user }}/bak/kafka_2.10-0.10.0.0.tgz dest=/home/{{ user }}/ copy=no group={{ user }} owner={{ user }}
+      tags: unarchive
+
+    - name: create data directory. tags --> create_data_dir
+      file: dest=/home/{{ user }}/kafka-10-logs state=directory group={{ user }} owner={{ user }}
+      tags: create_data_dir
+      
+    - name: prepare server.properties file. tags --> prepare_server_properties
+      template: src=server.properties.j2 dest=/home/{{ user }}/kafka_2.10-0.10.0.0/config/server.properties group={{ user }} owner={{ user }}
+      tags: prepare_server_properties
+
+    - name: copy prepare broker.id shell script. tags --> broker_id_shell
+      template: src=generate_broker_id.sh.j2 dest=/tmp/generate_broker_id.sh group={{ user }} owner={{ user }}
+      tags: broker_id_shell
+
+    - name: execute generate_broker_id.sh. tags --> exec_shell
+      shell: /bin/bash /tmp/generate_broker_id.sh
+      tags: exec_shell
+    
+    - name: prepare kafka boot shell script. tags --> kafka_boot_shell
+      template: src=kafka-server-start.sh.j2 dest=/home/{{ user }}/kafka_2.10-0.10.0.0/bin/kafka-server-start.sh
+      tags: kafka_boot_shell
+
+    - name: prepare to boot the shell script. tags --> poweron_boot_shell
+      template: src=kafka_start.sh.j2 dest=/home/{{ user }}/bin/kafka_start.sh group={{ user }} owner={{ user }}
+      tags: poweron_boot_shell
+
+    - name: start kafka. tags --> start_kafka
+      shell: /bin/bash /home/{{ user }}/bin/kafka_start.sh
+      become: True
+      become_user: "{{ user }}"
+      tags: start_kafka
+
+    - name: configure poweron boot kafka. tags --> poweron_boot
+      lineinfile: dest=/etc/rc.local regexp='^sudo -u {{ user }} /bin/bash /home/{{ user }}/bin/kafka_start.sh' insertbefore='^exit 0' line='sudo -u {{ user }} /bin/bash /home/{{ user }}/bin/kafka_start.sh'
+      tags: poweron_boot
+
+#    - name: Check whether the configuration kafka start. tags --> check_zk_auto_start
+#      shell: grep "kafka_start.sh" /etc/rc.local
+#      register: check_boot
+#      ignore_errors: True
+#      tags: check_kafka_auto_start
+#
+#    - name: configure power on boot kafka. tags --> poweron_boot
+#      shell: sed -i '/^exit 0/isudo -u {{ user }} /bin/bash /home/{{ user }}/bin/kafka_start.sh' /etc/rc.local
+#      when: check_boot|failed
+#      tags: poweron_boot
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

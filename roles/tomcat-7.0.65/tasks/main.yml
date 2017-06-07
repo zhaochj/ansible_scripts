@@ -1,0 +1,101 @@
+---
+
+- block:
+    - name: download tomcat package from file server. tags --> down_tomcat
+      get_url: url=http://{{ fileserver }}/tomcat/tomcat-7.0.65.tgz dest=/home/{{ user }}/bak
+      tags: down_tomcat
+
+    - name: unarchive tomcat package. tags --> unarchive_tomcat
+      unarchive: src=/home/{{ user }}/bak/tomcat-7.0.65.tgz dest=/home/{{ user }}/ copy=no group={{ user }} owner={{ user }}
+      tags: unarchive_tomcat
+
+#    - name: configure the tomcat environment variable. tags --> tomcat_env_variable
+#      template: src=confige_tomcat_environment_varible.sh.j2 dest=/tmp/confige_tomcat_environment_varible.sh mode=0755
+#      tags: tomcat_env_variable
+#
+#    - name: execute confige_tomcat_environment_varible.sh. tags --> exec_shell
+#      shell: /tmp/confige_tomcat_environment_varible.sh
+#      args:
+#          executable: /bin/bash
+#      tags: exec_shell
+
+#     - name: check the tomcat evironment variable
+#      shell: grep "CATALINA_HOME" /home/{{ user }}/.bashrc
+#      register: check_env
+#      ignore_errors: True
+#      tags: check_tomcat_env
+#
+#    - name: configure the tomcat environment variable. tags --> tomcat_env_variable
+#      shell: echo "###custom environment variable###\nCATALINA_HOME=/home/{{ user }}/tomcat-7.0.65\nexport PATH=\$CATALINA_HOME/bin:\$PATH\nexport CATALINA_HOME\nPATH=\$PATH:\$HOME/bin\nexport PATH" >> /home/{{ user }}/.bashrc
+#      when: check_env|failed
+#      tags: tomcat_env_variable
+
+    - name: configure tomcat environment
+      lineinfile: dest=/home/{{ user }}/.bashrc state=present create=yes group={{ user }} owner={{ user }} regexp='^###custom environment variable###' line='###custom environment variable###'
+      tags: notes
+
+    - name: configure tomcat environment for CATALINA_HOME
+      lineinfile: 
+          dest: /home/{{ user }}/.bashrc
+          state: present
+          group: "{{ user }}"
+          owner: "{{ user }}"
+          regexp: '^CATALINA_HOME=/home/{{ user }}/tomcat-7.0.65'
+          insertafter: '###custom environment variable###'
+          line: 'CATALINA_HOME=/home/{{ user }}/tomcat-7.0.65'
+      tags: catalina_home
+
+    - name: configure tomcat enviroment for export PATH=$CATALINA_HOME/bin:$PATH
+      lineinfile: 
+          dest: /home/{{ user }}/.bashrc
+          state: present
+          group: "{{ user }}"
+          owner: "{{ user }}"
+          regexp: '^export PATH=\$CATALINA_HOME/bin:\$PATH'
+          insertafter: '^CATALINA_HOME=/home/{{ user }}/tomcat-7.0.65'
+          line: 'export PATH=$CATALINA_HOME/bin:$PATH'
+      tags: catalina_path
+
+    - name: configure tomcat environment for export CATALINA_HOME
+      lineinfile:
+          dest: /home/{{ user }}/.bashrc
+          state: present
+          group: "{{ user }}"
+          owner: "{{ user }}"
+          regexp: '^export CATALINA_HOME'
+          insertafter: '^export PATH=\$CATALINA_HOME/bin:\$PATH'
+          line: 'export CATALINA_HOME'
+      tags: export_catalina_home
+
+    - name: configure tomcat environment for PATH=$PATH:$HOME/bin
+      lineinfile:
+          dest: /home/{{ user }}/.bashrc
+          state: present
+          group: "{{ user }}"
+          owner: "{{ user }}"
+          regexp: '^PATH=\$PATH:\$HOME/bin'
+          insertafter: '^export CATALINA_HOME'
+          line: 'PATH=$PATH:$HOME/bin'
+      tags: path
+
+    - name: configure tomcat environment for exprort PATH
+      lineinfile:
+          dest: /home/{{ user }}/.bashrc
+          state: present
+          group: "{{ user }}"
+          owner: "{{ user }}"
+          regexp: '^export PATH$'
+          insertafter: '^PATH=\$PATH:\$HOME/bin'
+          line: 'export PATH'
+      tags: export_path
+
+    - name: copy catalina.sh. tags --> copy_catalina.sh
+      template: src=catalina.sh.j2 dest=/home/{{ user }}/tomcat-7.0.65/bin/catalina.sh group={{ user }} owner={{ user }}
+      tags: copy_catalina.sh
+
+    - name: if user is iov_read,modify server.xml. tags --> copy_server.xml
+      copy: src=server.xml.iov_read dest=/home/{{ user }}/tomcat-7.0.65/conf/server.xml group={{ user }} owner={{ user }}
+      when: user == "iov_read"
+      tags: copy_server.xml
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

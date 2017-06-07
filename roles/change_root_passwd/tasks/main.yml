@@ -1,0 +1,11 @@
+---
+- name: modify the root password for prerelease environment. tags --> change_root_passwd_pre
+  user: name=root password={{ root_passwd_pre }}
+  when: env == "pre"
+  tags: change_root_passwd_pre
+
+- name: modify the root password for production environment. tags --> change_root_passwd_production
+  user: name=root password={{ root_passwd_pro }}
+  when: env == "production"
+  tags: change_root_passwd_production
+

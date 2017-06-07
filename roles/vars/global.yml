@@ -1,0 +1,6 @@
+---
+jdk_home: /opt
+run_java_user_passwd_pre: $1$6e6abff9$ya91e02pMByQLBouqQ6Mn0
+run_java_user_passwd_pro: $1$c6f3a8b1$CHkqfUWwruMdnztU1u1.P0
+time_server_pre: 172.31.1.100
+time_server_production: 172.31.3.1

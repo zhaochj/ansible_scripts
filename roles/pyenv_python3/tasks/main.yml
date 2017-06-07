@@ -1,0 +1,16 @@
+---
+- block:
+    - name: download pyenv tgz. tags --> down_pyenv
+      get_url: url=http://{{ fileserver }}/pyenv/pyenv.tgz dest=/usr/local/
+      tags: down_pyenv
+    
+    - name: unarchive pyenv.tgz. tags --> unarchive
+      unarchive: src=/usr/local/pyenv.tgz dest=/usr/local/ copy=no
+      tags: unarchive
+    
+    - name: export pyenv vironment. tags --> pyenv.sh
+      copy: src=pyenv.sh dest=/etc/profile.d/
+      tags: pyenv.sh
+    
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"
+

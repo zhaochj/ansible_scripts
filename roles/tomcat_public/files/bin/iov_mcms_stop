@@ -1,0 +1,58 @@
+#!/bin/bash
+#Program: backup befor upgrade
+#Author: Neal
+#E_mail: 419775240@qq.com
+#Date: 2015-7-24
+#Version 1.0
+#Explain: Use tomcat users to run the script
+
+# May need to change the value of the variable
+PROJECT_NAME=iov_mcms
+INSTANCE_NAME=tomcat9100
+JAVA_HOME=/home/tomcat/jdk1.7.0_60
+CATALINA_HOME=/home/tomcat/$INSTANCE_NAME
+USER_HOME=/home/tomcat
+BACKUP_DIR=/home/tomcat/bak
+
+PATH=${USER_HOME}/bin:${JAVA_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
+JAVA_PID=`ps aux | grep java | grep "$CATALINA_HOME" | awk '{print $2}'`
+if [ ! $JAVA_PID ];then
+    echo "项目$PROJECT_NAME没有运行，请检查。"
+    exit 1
+else
+    echo "现在停止运行$PROJECT_NAME项目的java进程。"
+fi
+
+# 正常停止java进程
+JAVA_PID_A=`ps aux | grep java | grep "$CATALINA_HOME" | awk '{print $2}'`
+if [ $JAVA_PID_A ];then
+    $CATALINA_HOME/bin/catalina.sh stop > /dev/null
+    sleep 5
+else
+   echo "项目$PROJECT_NAME没有运行。"
+   exit 1
+fi
+
+# 如果java进程无法正常停止，那采用kill来杀掉进程
+JAVA_PID_B=`ps aux | grep java | grep "$CATALINA_HOME" | awk '{print $2}'`
+if [ ! $JAVA_PID_B ];then
+    echo "$PROJECT_NAME项目已正常停止。"
+else
+    echo "$PROJECT_NAME项目没有正常停止，现在准备杀死运行$PROJECT_NAME项目的java进程。"
+    kill  $JAVA_PID_B
+    sleep 5
+    # 再次测试java进程是否被杀死，如果没有被杀死则强制杀死进程。
+    JAVA_PID_C=`ps aux | grep java | grep "$CATALINA_HOME" | awk '{print $2}'`
+    if [ ! $JAVA_PID_C ];then
+        echo "运行$PROJECT_NAME项目的java进程已被kill掉。"
+    else
+        echo "运行$PROJECT_NAME项目的java进程没有被Kill掉，现在使用'kill -9'来杀死它。"
+        kill -9 $JAVA_PID_C
+    fi
+fi
+JAVA_PID_D=`ps aux | grep java | grep "$CATALINA_HOME" | awk '{print $2}'`
+if [ ! $JAVA_PID_D ];then
+    echo "运行$PROJECT_NAME项目的java进程已被成功停掉。"
+fi

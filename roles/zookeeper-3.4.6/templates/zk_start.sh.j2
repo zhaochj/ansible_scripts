@@ -1,0 +1,12 @@
+#!/bin/bash
+#Author: Neal
+#Email: 419775240@qq.com
+#Date: 2017-01-11
+
+source /etc/profile
+
+counter=$(jps | grep QuorumPeerMain | wc -l)
+if [ "${counter}" = "0" ];then
+    cd /home/{{ user }}/zookeeper-3.4.6/bin/
+    ./zkServer.sh start
+fi

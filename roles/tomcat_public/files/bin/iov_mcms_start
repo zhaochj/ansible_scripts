@@ -1,0 +1,28 @@
+#!/bin/bash
+#Program: Clean up the temporary data, start the service
+#Author: Neal
+#E_mail: 419775240@qq.com
+#Date: 2015-7-25
+#Version 1.0
+#Explain: Use tomcat users to run the script
+
+# May need to change the value of the variable
+PROJECT_NAME=iov_mcms
+INSTANCE_NAME=tomcat9100
+JAVA_HOME=/home/tomcat/jdk1.7.0_60
+CATALINA_HOME=/home/tomcat/$INSTANCE_NAME
+USER_HOME=/home/tomcat
+BACKUP_DIR=/home/tomcat/bak
+
+PATH=${USER_HOME}/bin:${JAVA_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
+
+# Start tomcat
+JAVA_PID=`ps aux | grep java | grep "$CATALINA_HOME" | awk '{print $2}'`
+if [ ! $JAVA_PID ];then
+    /bin/rm -rf $CATALINA_HOME/work/Catalina/localhost
+    $CATALINA_HOME/bin/catalina.sh start
+else
+   exit 1
+fi

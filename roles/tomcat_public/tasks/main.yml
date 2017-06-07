@@ -1,0 +1,25 @@
+- block:
+    - name: copy bak directory to remote hosts. tags --> copy_bak
+      copy: src=bak/ dest=/home/{{ user }}/bak group={{ user }} owner={{ user }}
+      tags: copy_bak
+
+    - name: create bin.
+      file: dest=/home/{{ user }}/bin state=directory group={{ user }} owner={{ user }}
+
+    - name: copy bin directory to remote hosts. tags --> copy_bin
+      copy: src=bin/ dest=/home/{{ user }}/bin group={{ user }} owner={{ user }} mode=0754
+      tags: copy_bin
+
+    - name: copy data_sync.sh_tomcat.j2. tags --> copy_data_sync.sh
+      template: src=data_sync.sh.j2 dest=/home/{{ user }}/bin/data_sync.sh group={{ user }} owner={{ user }} mode=0754
+      tags: copy_data_sync.sh
+
+    - name: Log backup schedule task. tags --> cron_rsync_logs
+      cron: name='logs back' minute={{ 59 |random(start=1, step=10) }} hour={{ ['22','23','00','01','02','03','04','05'] |random }} job='/bin/bash /home/{{ user }}/bin/data_sync.sh 800 > /dev/null 2>&1 &' user={{ user }}
+      tags: cron_rsync_logs
+    
+    - name: Log cleanup schedule task. tags --> cron_logs_clear
+      cron: name='logs clear' minute=0 job='/bin/bash {{ user }}/bin/logs_clear.sh 66 5 15 > /dev/null 2>&1 &' user={{ user }}
+      tags: cron_logs_clear
+    
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

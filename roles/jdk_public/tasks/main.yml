@@ -1,0 +1,36 @@
+---
+- block:
+    - name: install jconsole dependencies. tags --> jconsole
+      apt: name={{ item }} state=present
+      with_items:
+          - libxrender-dev
+          - libxtst-dev
+          - x11-xserver-utils
+      ignore_errors: True
+      tags: jconsole
+    
+    - name: add run java user for prerelease, default is tomcat. tags --> add_user 
+      user: name={{ user }} password={{ run_java_user_passwd_pre }} shell=/bin/bash
+      when: env == "pre"
+      tags: add_user
+
+    - name: add run java user for production, default is tomcat. tags --> add_user
+      user: name={{ user }} password={{ run_java_user_passwd_pro }} shell=/bin/bash
+      when: env == "production"
+      tags: add_user
+
+    - name: create bak.
+      file: dest=/home/{{ user }}/bak state=directory group={{ user }} owner={{ user }}
+
+    - name: configuration vimrc
+      copy: src=.vimrc dest=/home/{{ user }} group={{ user }} owner={{ user }}
+      tags: vimrc
+    
+    - name: rsync authorized keys. tags --> rsync_key
+      authorized_key:
+         key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+         user: "{{ user }}"
+         state: present
+      tags: rsync_key
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

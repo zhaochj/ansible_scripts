@@ -1,0 +1,48 @@
+#!/bin/bash
+#Author: Neal
+#Email: 419775240@qq.com
+
+source /home/tomcat/bin/function_iov_mcms
+
+cat << EOF
+        1)    启动服务
+        2)    停止服务
+        3)    备份项目
+        4)    查看日志
+EOF
+
+read Choice_1
+if [[ $Choice_1 -eq 1 ]];then
+    start
+elif [[ $Choice_1 -eq 2 ]];then
+    stop
+elif [[ $Choice_1 -eq 3 ]];then
+    backup
+fi
+
+while true;do
+    if [[ $Choice_1 -eq 4 ]];then
+        cat << EOF
+            1)    查看启动日志
+            2)    查看info日志
+            3)    查看debug日志
+            4)    查看warn日志
+            5)    查看trace日志
+            6)    查看error日志
+EOF
+        read Choice_2
+        if [[ $Choice_2 -eq 1 ]];then
+            boot_log
+        elif [[ $Choice_2 -eq 2 ]];then
+            info_log
+        elif [[ $Choice_2 -eq 3 ]];then
+            debug_log
+        elif [[ $Choice_2 -eq 4 ]];then
+            warn_log
+        elif [[ $Choice_2 -eq 5 ]];then
+            trace_log
+        elif [[ $Choice_2 -eq 6 ]];then
+            error_log
+        fi
+    fi
+done

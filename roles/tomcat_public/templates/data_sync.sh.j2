@@ -1,0 +1,27 @@
+#!/bin/bash
+#Program: data rsync
+#Author: Neal
+#E_mail: 419775240@qq.com
+#Date: 2016-1-11
+#Version 1.0
+#使用说明：/bin/bash data_sync.sh 1000，接收一个速率控制的参数，单位为KBPS
+
+Local_Ip={{ ansible_eth0.ipv4.address }}
+Rsync_Server_Ip=back.common.kartor.cn
+
+#需要根据实际情况修改,Modle_Name这个目录需要在Rsync_Server_Ip的/data/backup/weblog/下创建
+Log_Home=/home/{{ user }}/tomcat-7.0.54/logs
+Project_Bak=/home/{{ user }}/bak
+Modle_Name=vms-mcms
+Rsync_Server_Path=webapp_log_backup
+
+if [ ! -f $Project_Bak/rsync.passwd ];then
+    echo "qwert123!" > $Project_Bak/rsync.passwd
+    chmod 600 $Project_Bak/rsync.passwd
+fi
+
+# 备份日志目录
+#/usr/bin/rsync -auvzP --bwlimit=$1 --password-file=$Project_Bak/rsync.passwd ${Log_Home} rsync@${Rsync_Server_Ip}::${Rsync_Server_Path}/${Modle_Name}/${Local_Ip}
+
+# 备份bak目录
+#/usr/bin/rsync -auvzP --bwlimit=$1 --password-file=$Project_Bak/rsync.passwd ${Project_Bak} rsync@${Rsync_Server_Ip}::${Rsync_Server_Path}/${Modle_Name}/${Local_Ip}

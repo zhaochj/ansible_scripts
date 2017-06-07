@@ -1,0 +1,43 @@
+! Configuration File for keepalived
+
+global_defs {
+   router_id {{ ansible_nodename }}
+}
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0
+    lvs_sync_daemon_interface eth0
+    virtual_router_id {{ router_id }}
+    nopreempt
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass nginx123!
+    }
+    virtual_ipaddress {
+        {{ vip }} dev eth0
+    }
+}
+virtual_server {{ vip }} 80 {
+    delay_loop 6
+    lb_algo wlc
+    lb_kind DR
+    persistence_timeout 50
+    protocol TCP
+
+    real_server {{ realserver01 }} 80 {
+        weight 1
+        TCP_CHECK {
+            connect_timeout 10
+        }
+    }
+
+    real_server {{ realserver02 }} 80 {
+        weight 1
+        TCP_CHECK {
+            connect_timeout 10
+        }
+   }
+}

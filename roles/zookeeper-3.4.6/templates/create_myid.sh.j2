@@ -1,0 +1,10 @@
+#!/bin/bash
+#Author: Neal
+#Email: 419775240@qq.com
+#Date: 2017-01-05
+#Version 1.0
+
+ip={{ ansible_eth0.ipv4.address }}
+conf=/home/{{ user }}/zookeeper-3.4.6/conf/zoo.cfg
+myid=`grep ${ip} ${conf}`
+echo ${myid:7:1} > /home/{{ user }}/zk-data-logs/myid

@@ -1,0 +1,169 @@
+#user  nobody;
+user  nginx;
+worker_processes  {{ ansible_processor_count }};
+worker_rlimit_nofile 65535;
+
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+#pid        logs/nginx.pid;
+pid        /var/run/nginx18.pid;
+
+
+events {
+    worker_connections  40960;
+    
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #underscores_in_headers on; #自定义header中是否允许出现下划线，on为允许，off为禁止，默认为禁止
+
+    # $upstream_cache_status 记录缓存命中率
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"'
+    #                  '"$upstream_cache_status"';
+
+    log_format  main  '$remote_addr $http_host $remote_user [$time_local] "real_server $upstream_addr" "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"'
+                      '$http_ver "upstream-response-time $upstream_response_time" "request-time $request_time"';
+
+    access_log  logs/access.log  main;
+    server_tokens off;
+    underscores_in_headers on;
+    
+    #根据需要启用或信用缓存功能
+   # proxy_temp_path /usr/local/nginx18/proxy_temp;
+   # proxy_cache_path /usr/local/nginx18/proxy_cache levels=1:2 keys_zone=cache_one:100m inactive=2d max_size=2g;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  300;
+
+    client_header_buffer_size 4k;
+
+    #gzip  on;
+
+    # http://nginx.org/en/docs/http/server_names.html
+    proxy_headers_hash_max_size 512;
+    proxy_headers_hash_bucket_size 128;
+
+
+    large_client_header_buffers 4 16k;
+    fastcgi_intercept_errors on;
+    client_max_body_size 300m;
+    client_body_buffer_size 128k;
+    proxy_connect_timeout 600;
+    proxy_read_timeout 600;
+    proxy_send_timeout 600;
+    proxy_buffer_size 64k;
+    proxy_buffers   4 32k;
+    proxy_busy_buffers_size 64k;
+    proxy_temp_file_write_size 64k;
+
+    server {
+        listen       8134;
+        server_name  localhost;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+        location /layer4-status {
+            tcp_check_status;
+            access_log off;
+        }
+        location /layer7-status {
+            check_status;
+            access_log off;
+        #    allow 172.16.0.0/24;
+        #    deny all;
+        }
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+        }
+
+        #error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+
+        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+        #
+        #location ~ \.php$ {
+        #    proxy_pass   http://127.0.0.1;
+        #}
+
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        #location ~ \.php$ {
+        #    root           html;
+        #    fastcgi_pass   127.0.0.1:9000;
+        #    fastcgi_index  index.php;
+        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+        #    include        fastcgi_params;
+        #}
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        #location ~ /\.ht {
+        #    deny  all;
+        #}
+    }
+
+
+    # another virtual host using mix of IP-, name-, and port-based configuration
+    #
+    #server {
+    #    listen       8000;
+    #    listen       somename:8080;
+    #    server_name  somename  alias  another.alias;
+
+    #    location / {
+    #        root   html;
+    #        index  index.html index.htm;
+    #    }
+    #}
+
+
+    # HTTPS server
+    #
+    #server {
+    #    listen       443 ssl;
+    #    server_name  localhost;
+
+    #    ssl_certificate      cert.pem;
+    #    ssl_certificate_key  cert.key;
+
+    #    ssl_session_cache    shared:SSL:1m;
+    #    ssl_session_timeout  5m;
+
+    #    ssl_ciphers  HIGH:!aNULL:!MD5;
+    #    ssl_prefer_server_ciphers  on;
+
+    #    location / {
+    #        root   html;
+    #        index  index.html index.htm;
+    #    }
+    #}
+    include       layer7/*.conf;
+}
+include       layer4/*.conf;

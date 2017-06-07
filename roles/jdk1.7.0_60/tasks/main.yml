@@ -1,0 +1,24 @@
+---
+
+- block:
+    - name: download jdk package from file server. tags --> down_jdk
+      get_url: url=http://{{ fileserver }}/jdk/jdk1.7.60.tgz dest={{ jdk_home }}
+      tags: down_jdk
+
+    - name: unarchive jdk package. tags --> unarchive
+      unarchive: src={{ jdk_home }}/jdk1.7.60.tgz dest={{ jdk_home }}/ copy=no group=root owner=root
+      tags: unarchive
+
+    - name: export jdk environment variables. tags --> jdk_env
+      copy: src=jdk.1.7.sh dest=/etc/profile.d/
+      tags: jdk_env
+
+    - name: create bin directory. tags --> create_bin
+      file: dest=/home/{{ user }}/bin state=directory group={{ user }} owner={{ user }}
+      tags: create_bin
+
+    - name: copy logs_clear.sh to bin directory. tags --> cop_logs_clear.sh
+      copy: src=logs_clear.sh dest=/home/{{ user }}/bin/ group={{ user }} owner={{ user }}
+      tags: copy_logs_clear.sh
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

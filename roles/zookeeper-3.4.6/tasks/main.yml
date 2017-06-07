@@ -1,0 +1,62 @@
+---
+
+- block:
+    - name: download zookeeper package from fileserver. tags --> down_zk
+      get_url: url=http://{{ fileserver }}/zookeeper/zookeeper-3.4.6.tgz dest=/home/{{ user }}/bak/ group={{ user }} owner={{ user }}
+      tags: down_zk
+
+    - name: unarchive zookeeper-3.4.6.tgz. tags --> unarchive
+      unarchive: src=/home/{{ user }}/bak/zookeeper-3.4.6.tgz dest=/home/{{ user }}/ copy=no group={{ user }} owner={{ user }}
+      tags: unarchive
+
+    - name: create a data directory. tags --> create_datalog
+      file: dest=/home/{{ user }}/zk-data-logs state=directory group={{ user }} owner={{ user }}
+      tags: create_datalog
+
+    - name: prepare zoo.cfg file. tags --> prepare_cfg
+      template: src=zoo.cfg.j2 dest=/home/{{ user }}/zookeeper-3.4.6/conf/zoo.cfg group={{ user }} owner={{ user }}
+      tags: prepare_cfg
+
+    - name: prepare the shell script to generate myid. tags --> prepare_build_myid_shell
+      template: src=create_myid.sh.j2 dest=/tmp/create_myid.sh
+      tags: prepare_build_myid_shell
+
+    - name: execute create_myid.sh,build myid number. tags --> build_myid
+      shell: /bin/bash /tmp/create_myid.sh
+      tags: build_myid
+
+    - name: prepare boot shell script. tags --> boot_script
+      template: src=zkServer.sh.j2 dest=/home/{{ user }}/zookeeper-3.4.6/bin/zkServer.sh group={{ user }} owner={{ user }}
+      tags: boot_script
+
+    - name: prepare to start the shell script automatically. tags --> boot_script
+      template: src=zk_start.sh.j2 dest=/home/{{ user }}/bin/zk_start.sh
+      tags: boot_script
+
+    - name: configure poweron boot zookeeper. tags --> poweron_boot
+      lineinfile: dest=/etc/rc.local regexp='^sudo -u {{ user }} /bin/bash /home/{{ user }}/bin/zk_start.sh' insertbefore='^exit 0' line='sudo -u {{ user }} /bin/bash /home/{{ user }}/bin/zk_start.sh'
+      tags: poweron_boot
+
+#    - name: Check whether the configuration zookeeper start. tags --> check_zk_auto_start
+#      shell: grep "zk_start.sh" /etc/rc.local
+#      register: check_boot
+#      ignore_errors: True
+#      tags: check_zk_auto_start
+#
+#    - name: configure power on vm boot zookeeper. tags --> poweron_boot
+#      shell: sed -i '/^exit 0/isudo -u {{ user }} /bin/bash /home/{{ user }}/bin/zk_start.sh' /etc/rc.local
+#      when: check_boot|failed
+#      tags: poweron_boot
+
+    - name: boot zookeeper now. tags --> boot_zk
+      shell: /bin/bash /home/{{ user }}/bin/zk_start.sh
+      become: True
+      become_user: "{{ user }}"
+      tags: boot_zk
+      
+    - name: set scheduled tasks clean up log files. tags --> cron_clean_logs
+      cron: name='clean data' minute={{ 59 |random(step=5) }} hour='{{ 6 |random }}' user={{ user }} job='/home/{{ user }}/zookeeper-3.4.6/bin/zkCleanup.sh /home/{{ user }}/zk-data-logs/version-2 2000'
+      tags: cron_clean_logs
+    
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

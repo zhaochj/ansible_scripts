@@ -1,0 +1,32 @@
+{% if ansible_distribution == "Debian" and ansible_distribution_major_version == "8" and env == "pre" %}
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+/usr/sbin/ntpdate -u {{ time_server_pre }} > /tmp/cron_time.txt
+exit 0
+{% endif %}
+{% if ansible_distribution == "Debian" and ansible_distribution_major_version == "8" and env == "production" %}
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+/usr/sbin/ntpdate -u {{ time_server_production }} > /tmp/cron_time.txt
+exit 0
+{% endif %}

@@ -1,0 +1,13 @@
+/usr/local/nginx18/logs/*.log {
+        daily
+        missingok
+        rotate 30
+        compress
+        delaycompress
+        notifempty
+        create 644 nginx staff
+        sharedscripts
+        postrotate
+                [ -f /var/run/nginx18.pid ] && kill -USR1 `cat /var/run/nginx18.pid`
+        endscript
+}

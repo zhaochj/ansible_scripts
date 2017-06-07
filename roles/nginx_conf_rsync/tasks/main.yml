@@ -1,0 +1,22 @@
+---
+- block:
+    - name: create work_scripts
+      file: dest=/root/nginx_conf_rsync state=directory
+    
+    - name: copy syncfile.py
+      template: src=syncfile.py.j2 dest=/root/nginx_conf_rsync/syncfile.py
+      tags: syncfile.py
+    
+    - name: install supervisor
+      apt: name=supervisor state=present
+      tags: install_supervisor
+    
+    - name: stop supervisor.service
+      service: name=supervisor.service enabled=yes state=stopped 
+      tags: stop_supervisor
+    
+    - name: copy nginx_syncfile.conf to "/etc/supervisor/conf.d"
+      copy: src=nginx_syncfile.conf dest=/etc/supervisor/conf.d
+      tags: copy_nginx_syncfile.conf
+
+  when: ansible_distribution == "Debian" and ansible_distribution_major_version == "8"

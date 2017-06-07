@@ -1,0 +1,5 @@
+alias ls='ls --color=auto'
+alias ll='ls -l'
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+#alias netsta -s='netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
