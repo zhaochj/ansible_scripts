@@ -1,1 +1,2 @@
 ftproot_files/jdk/jdk1.7.60.tgz filter=lfs diff=lfs merge=lfs -text
+ftproot_files/jdk/jdk1.8.0_65.tgz filter=lfs diff=lfs merge=lfs -text
